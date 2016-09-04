@@ -1,1 +1,1 @@
-It is my log for other prject.
+doc: It is my log souce for other project.
