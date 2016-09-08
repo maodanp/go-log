@@ -23,6 +23,13 @@ var LOG_LEVEL_MAP = map[int]string{
 	LOG_FATAL:    "FATAL",
 }
 
+var Logger *logger
+
+func init() {
+	Logger := NewLogger(os.Stdout, "", log.Lshortfile|log.LstdFlags)
+	Logger.SetLogLevel(LOG_DEBUG)
+}
+
 // NewLoggerByPath creates a new logger by fileName
 func NewLoggerByFileName(fileName string) *logger {
 	//return &logger{log.New(w, prefix, log.LstdFlags)}
@@ -66,11 +73,11 @@ func (l *logger) Debugf(f string, args ...interface{}) {
 	l.outputf(LOG_DEBUG, f, args)
 }
 
-func (l *logger) Warning(args ...interface{}) {
+func (l *logger) Warn(args ...interface{}) {
 	l.output(LOG_WARNINIG, args)
 }
 
-func (l *logger) Warningf(f string, args ...interface{}) {
+func (l *logger) Warnf(f string, args ...interface{}) {
 	l.outputf(LOG_WARNINIG, f, args)
 }
 

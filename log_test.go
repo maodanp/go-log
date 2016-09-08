@@ -25,8 +25,8 @@ func TestNewLogger(t *testing.T) {
 	} {
 		log.Debug("hello", test)
 		log.Debugf("something, %v", test)
-		log.Warning(test)
-		log.Warningf("something, %v", test)
+		log.Warn(test)
+		log.Warnf("something, %v", test)
 	}
 }
 
@@ -43,7 +43,7 @@ func TestLoggerFileName(t *testing.T) {
 	} {
 		log.Debug("hello", test)
 		log.Debugf("something, %v", test)
-		log.Warning(test)
-		log.Warningf("something, %v", test)
+		log.Warn(test)
+		log.Warnf("something, %v", test)
 	}
 }
