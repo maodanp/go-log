@@ -19,14 +19,14 @@ const (
 var LOG_LEVEL_MAP = map[int]string{
 	LOG_DEBUG:    "DEBUG",
 	LOG_INFO:     "INFO",
-	LOG_WARNINIG: "WARNING",
+	LOG_WARNINIG: "WARN",
 	LOG_FATAL:    "FATAL",
 }
 
 var Logger *logger
 
 func init() {
-	Logger := NewLogger(os.Stdout, "", log.Lshortfile|log.LstdFlags)
+	Logger = NewLogger(os.Stdout, "", log.LstdFlags)
 	Logger.SetLogLevel(LOG_DEBUG)
 }
 
@@ -66,27 +66,27 @@ func (l *logger) SetLogLevel(logLevel int) {
 }
 
 func (l *logger) Debug(args ...interface{}) {
-	l.output(LOG_DEBUG, args)
+	l.output(LOG_DEBUG, args...)
 }
 
 func (l *logger) Debugf(f string, args ...interface{}) {
-	l.outputf(LOG_DEBUG, f, args)
+	l.outputf(LOG_DEBUG, f, args...)
 }
 
 func (l *logger) Warn(args ...interface{}) {
-	l.output(LOG_WARNINIG, args)
+	l.output(LOG_WARNINIG, args...)
 }
 
 func (l *logger) Warnf(f string, args ...interface{}) {
-	l.outputf(LOG_WARNINIG, f, args)
+	l.outputf(LOG_WARNINIG, f, args...)
 }
 
 func (l *logger) Error(args ...interface{}) {
-	l.output(LOG_ERROR, args)
+	l.output(LOG_ERROR, args...)
 }
 
 func (l *logger) Errorf(f string, args ...interface{}) {
-	l.outputf(LOG_ERROR, f, "")
+	l.outputf(LOG_ERROR, f, args...)
 }
 
 func (l *logger) Fatal(args ...interface{}) {
@@ -109,6 +109,6 @@ func (l *logger) outputf(level int, f string, args ...interface{}) {
 	if l.level|l.level > level {
 		return
 	}
-	s := fmt.Sprintf(f, args...)
+	s := "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprintf(f, args...)
 	l.log.Output(2, s)
 }
