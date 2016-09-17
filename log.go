@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
+	"runtime"
+	"strconv"
 )
 
 const (
@@ -26,43 +29,36 @@ var LOG_LEVEL_MAP = map[int]string{
 var Logger *logger
 
 func init() {
-	Logger = NewLogger(os.Stdout, "", log.LstdFlags)
-	Logger.SetLogLevel(LOG_DEBUG)
+	//if you don't want to use log, you can call NewLoggerDiscard()
+	// Logger = NewLoggerDiscard()
+
+	//output log info to stdout
+	Logger = NewLogger(os.Stdout, Config{})
+	Logger.SetLogLevel(LOG_INFO)
 }
 
-// NewLoggerByPath creates a new logger by fileName
-func NewLoggerByFileName(fileName string) *logger {
-	//return &logger{log.New(w, prefix, log.LstdFlags)}
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	if err != nil {
-		fmt.Printf("NewLoggerByFileName error: %+v", err)
-		return nil
-	}
-	return NewLogger(f, "opentsdb", log.LstdFlags)
-}
+type Config struct {
+	Level int
 
-// NewLoggerDiscard create a new logger.
-// But do without anything
-func NewLoggerDiscard() *logger {
-	return NewLogger(ioutil.Discard, "", log.Lshortfile|log.LstdFlags)
-}
+	DispFuncLineInfo bool
+	highlighting     bool
 
-// NewLogger creates a new logger.
-// it write to io.Writer
-// the prefix appears at the beginning of each generaged log line
-func NewLogger(w io.Writer, prefix string, flag int) *logger {
-	return &logger{
-		log: log.New(w, prefix, flag),
-	}
+	// Rotate daily for log file
+	Daily   bool
+	MaxDays int64
 }
 
 type logger struct {
-	log   *log.Logger
-	level int
+	log *log.Logger
+
+	Config
+
+	// for log file
+	FileName string
 }
 
 func (l *logger) SetLogLevel(logLevel int) {
-	l.level = logLevel
+	l.Level = logLevel
 }
 
 func (l *logger) Debug(args ...interface{}) {
@@ -71,6 +67,14 @@ func (l *logger) Debug(args ...interface{}) {
 
 func (l *logger) Debugf(f string, args ...interface{}) {
 	l.outputf(LOG_DEBUG, f, args...)
+}
+
+func (l *logger) Info(args ...interface{}) {
+	l.output(LOG_INFO, args...)
+}
+
+func (l *logger) Infof(f string, args ...interface{}) {
+	l.outputf(LOG_INFO, f, args...)
 }
 
 func (l *logger) Warn(args ...interface{}) {
@@ -98,17 +102,95 @@ func (l *logger) Fatalf(f string, args ...interface{}) {
 }
 
 func (l *logger) output(level int, args ...interface{}) {
-	if l.level|l.level > level {
+	if l.Level|l.Level > level {
 		return
 	}
-	s := "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprint(args...)
+
+	var s, funcLineInfo string
+	if l.DispFuncLineInfo {
+		_, file, line, ok := runtime.Caller(2)
+		if !ok {
+			file = "???"
+			line = 0
+		}
+		_, filename := path.Split(file)
+		funcLineInfo = "[" + filename + ":" + strconv.FormatInt(int64(line), 10) + "] "
+	}
+	if l.FileName == "" && l.highlighting {
+		logColor := highlightTypeByLevel(level)
+		s += "\033" + logColor + "m" + funcLineInfo + "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprint(args...) + "\033[0m"
+	} else {
+		s += "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprint(args...)
+	}
 	l.log.Output(2, s)
 }
 
 func (l *logger) outputf(level int, f string, args ...interface{}) {
-	if l.level|l.level > level {
+	if l.Level|l.Level > level {
 		return
 	}
-	s := "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprintf(f, args...)
+
+	var s, funcLineInfo string
+	if l.DispFuncLineInfo {
+		_, file, line, ok := runtime.Caller(2)
+		if !ok {
+			file = "???"
+			line = 0
+		}
+		_, filename := path.Split(file)
+		funcLineInfo = "[" + filename + ":" + strconv.FormatInt(int64(line), 10) + "] "
+	}
+	if l.FileName == "" && l.highlighting {
+		logColor := highlightTypeByLevel(level)
+		s = "\033" + logColor + "m" + funcLineInfo + "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprintf(f, args...) + "\033[0m"
+	} else {
+		s += "[" + LOG_LEVEL_MAP[level] + "] " + fmt.Sprintf(f, args...)
+	}
 	l.log.Output(2, s)
+}
+
+func highlightTypeByLevel(t int) string {
+	switch t {
+	case LOG_DEBUG, LOG_INFO:
+		return "[0;36"
+	case LOG_WARNINIG:
+		return "[0;33"
+	case LOG_FATAL, LOG_ERROR:
+		return "[0;31"
+	}
+	return "[0;37"
+}
+
+// NewLoggerByPath creates a new logger by fileName
+func NewLoggerByFileName(fileName string, config Config) *logger {
+	//return &logger{log.New(w, prefix, log.LstdFlags)}
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Printf("NewLoggerByFileName error: %+v", err)
+		return nil
+	}
+	//return NewLogger(f, config)
+	log := NewLogger(f, config)
+	log.FileName = fileName
+	return log
+}
+
+// NewLoggerDiscard create a new logger.
+// But do without anything
+func NewLoggerDiscard() *logger {
+	return NewLogger(ioutil.Discard, Config{})
+}
+
+// NewLogger creates a new logger.
+// it write to io.Writer
+// the prefix appears at the beginning of each generaged log line
+func NewLogger(w io.Writer, config Config) *logger {
+	log := &logger{
+		log: log.New(w, "", log.LstdFlags),
+	}
+	if config.Level == 0 {
+		config.Level = LOG_INFO
+	}
+	log.Config = config
+	return log
 }

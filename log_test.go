@@ -1,7 +1,6 @@
 package log
 
 import (
-	"log"
 	"os"
 	"testing"
 )
@@ -13,7 +12,7 @@ type Bar struct {
 }
 
 func TestNewLogger(t *testing.T) {
-	log := NewLogger(os.Stdout, "", log.Lshortfile|log.LstdFlags)
+	log := NewLogger(os.Stdout, Config{highlighting: true, DispFuncLineInfo: true})
 	log.SetLogLevel(LOG_DEBUG)
 	f := &Foo{}
 	b := &Bar{"asfd", 3}
@@ -23,7 +22,7 @@ func TestNewLogger(t *testing.T) {
 		f,
 		b,
 	} {
-		log.Debug("hello", test)
+		log.Info("hello", test)
 		log.Debugf("something, %v", test)
 		log.Warn(test)
 		log.Warnf("something, %v", test)
@@ -31,7 +30,7 @@ func TestNewLogger(t *testing.T) {
 }
 
 func TestLoggerFileName(t *testing.T) {
-	log := NewLoggerByFileName("./test.log")
+	log := NewLoggerByFileName("/tmp/test.log", Config{})
 	log.SetLogLevel(LOG_DEBUG)
 	f := &Foo{}
 	b := &Bar{"asfd", 3}
