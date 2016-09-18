@@ -12,7 +12,7 @@ type Bar struct {
 }
 
 func TestNewLogger(t *testing.T) {
-	log := NewLogger(os.Stdout, Config{highlighting: true, DispFuncLineInfo: true})
+	log := NewLogger(os.Stdout, Config{highlighting: true, DispFuncCall: true})
 	log.SetLogLevel(LOG_DEBUG)
 	f := &Foo{}
 	b := &Bar{"asfd", 3}
