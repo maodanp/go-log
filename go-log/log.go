@@ -279,17 +279,6 @@ func NewLogger(w io.Writer, config Config) *logger {
 	return log
 }
 
-var Logger *logger
-
-func init() {
-	//if you don't want to use log, you can call NewLoggerDiscard()
-	// Logger = NewLoggerDiscard()
-
-	//output log info to stdout
-	Logger = NewLogger(os.Stdout, Config{})
-	Logger.SetLogLevel(LOG_INFO)
-}
-
 func highlightTypeByLevel(t int) string {
 	switch t {
 	case LOG_DEBUG, LOG_INFO:
